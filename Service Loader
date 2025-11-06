@@ -1,0 +1,72 @@
+repeat wait() until game:IsLoaded()
+local ContentProvider = game:GetService("ContentProvider")
+
+game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Health,false)
+
+local Loaded = {
+	[1] = {};
+	[2] = {};
+	[3] = {};
+	[4] = {};
+}
+
+local Animations = require(game.ReplicatedStorage.Source.Modules.Animations)
+
+function LoadAnims(Table,Return : nil)
+	if Return == nil then
+		Return = {}
+	end
+	
+	for Anim, Value in pairs(Table) do
+		if typeof(Value) == "table" then
+			LoadAnims(Value,Return)
+		elseif typeof(Value) == "number" then
+			Return[Anim] = Value
+		end
+	end
+	
+	return Return
+end
+
+local Animator = workspace.AnimationLoader.Humanoid
+for i,v in pairs(LoadAnims(Animations)) do
+	
+	local Animation = Instance.new("Animation")
+	Animation.Name = i
+	Animation.AnimationId = "rbxassetid://"..v
+	local animTrack = Animator:LoadAnimation(Animation)
+	animTrack.Looped = false
+	animTrack:Play()
+
+	local Connection
+	Connection = animTrack.Ended:Connect(function()
+		Connection:Disconnect()
+		animTrack:Destroy()
+	end)
+end
+
+
+
+for i,v in pairs(game.ReplicatedStorage.Services:GetChildren()) do
+	if v:IsA("ModuleScript") then
+		local required = require(v)
+
+		if required["LoadedValue"] then
+			table.insert(Loaded[required["LoadedValue"]()], v)
+		else
+			table.insert(Loaded[1], v)
+		end
+
+	end
+end
+
+for num=1,#Loaded do
+	for i,v in pairs(Loaded[num]) do
+
+		local required = require(v)
+
+		if required["Start"] then
+			required["Start"]()
+		end
+	end
+end
