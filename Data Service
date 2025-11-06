@@ -1,1 +1,42 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+local DataStoreService = game:GetService("DataStoreService")
 
+local DataRemote = ReplicatedStorage.Source.Remotes.DataRemote
+
+local DataService = {}
+local UniversalData = {}
+
+local masterKey
+if ServerScriptService:FindFirstChild("Source") then
+	masterKey = DataStoreService:GetDataStore("masterKey001")
+end
+
+function DataService.SetData(Player : Client,Info : {Instance})
+	UniversalData[Player.Name] = Info
+	
+	if ServerScriptService:FindFirstChild("Source") then
+		
+		masterKey:SetAsync(Player.Name,Info)
+		DataRemote:FireAllClients({
+			["Player"] = Player;
+			["Data"] = Info;
+		})
+	end
+	
+end
+
+function DataService.GetAsync(Player : Client)
+	return masterKey:GetAsync(Player.Name)
+end
+
+function DataService.GetData(Player : Client)
+	return UniversalData[Player.Name]
+end
+
+function DataService.GetAllData()
+	return UniversalData
+end
+
+return DataService
